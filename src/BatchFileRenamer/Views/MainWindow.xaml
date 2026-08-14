@@ -54,22 +54,7 @@
             </Setter>
         </Style>
 
-        <!-- ComboBox Style -->
-        <Style x:Key="ModernComboBox" TargetType="ComboBox">
-            <Setter Property="Background" Value="#1E293B"/>
-            <Setter Property="Foreground" Value="#F8FAFC"/>
-            <Setter Property="BorderBrush" Value="#334155"/>
-            <Setter Property="Padding" Value="8,5"/>
-            <Setter Property="MinHeight" Value="32"/>
-        </Style>
 
-        <!-- DatePicker Style -->
-        <Style x:Key="ModernDatePicker" TargetType="DatePicker">
-            <Setter Property="Background" Value="#1E293B"/>
-            <Setter Property="Foreground" Value="#F8FAFC"/>
-            <Setter Property="BorderBrush" Value="#334155"/>
-            <Setter Property="Padding" Value="6,4"/>
-        </Style>
 
         <!-- CheckBox Style -->
         <Style x:Key="ModernCheckBox" TargetType="CheckBox">
@@ -272,7 +257,7 @@
                             <!-- Presets Dropdown -->
                             <TextBlock Text="Mẫu cấu trúc gợi ý:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
                             <ComboBox ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}" 
-                                      DisplayMemberPath="DisplayName" Style="{StaticResource ModernComboBox}" Margin="0,0,0,12"/>
+                                      DisplayMemberPath="DisplayName" Margin="0,0,0,12"/>
 
                             <!-- Template Editor Box -->
                             <TextBlock Text="Mẫu định dạng tùy biến:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
@@ -356,7 +341,7 @@
                                 
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="Ngày bắt đầu:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                                    <DatePicker SelectedDate="{Binding StartDate}" Style="{StaticResource ModernDatePicker}"/>
+                                    <DatePicker SelectedDate="{Binding StartDate}"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2">
@@ -367,7 +352,7 @@
 
                             <!-- Date Language Selection -->
                             <TextBlock Text="Ngôn ngữ ngày tháng:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                            <ComboBox SelectedValue="{Binding SelectedLanguage}" SelectedValuePath="Tag" Style="{StaticResource ModernComboBox}">
+                            <ComboBox SelectedValue="{Binding SelectedLanguage}" SelectedValuePath="Tag">
                                 <ComboBoxItem Content="Tiếng Anh (en-US: Aug, Sep...)" Tag="en-US" IsSelected="True"/>
                                 <ComboBoxItem Content="Tiếng Việt (vi-VN: Thg8, Thg9...)" Tag="vi-VN"/>
                             </ComboBox>
@@ -386,7 +371,7 @@
                                     <ColumnDefinition Width="110"/>
                                 </Grid.ColumnDefinitions>
 
-                                <ComboBox Grid.Column="0" SelectedValue="{Binding SelectedSortCriterion}" SelectedValuePath="Tag" Style="{StaticResource ModernComboBox}">
+                                <ComboBox Grid.Column="0" SelectedValue="{Binding SelectedSortCriterion}" SelectedValuePath="Tag">
                                     <ComboBoxItem Content="Tên file (Tự nhiên)" Tag="{x:Static services:SortCriterion.Name}"/>
                                     <ComboBoxItem Content="Ngày tạo" Tag="{x:Static services:SortCriterion.CreatedDate}"/>
                                     <ComboBoxItem Content="Ngày sửa" Tag="{x:Static services:SortCriterion.ModifiedDate}"/>
@@ -394,7 +379,7 @@
                                     <ComboBoxItem Content="Đường dẫn" Tag="{x:Static services:SortCriterion.FullPath}"/>
                                 </ComboBox>
 
-                                <ComboBox Grid.Column="2" SelectedValue="{Binding SelectedSortDirection}" SelectedValuePath="Tag" Style="{StaticResource ModernComboBox}">
+                                <ComboBox Grid.Column="2" SelectedValue="{Binding SelectedSortDirection}" SelectedValuePath="Tag">
                                     <ComboBoxItem Content="Tăng dần ▲" Tag="{x:Static services:SortDirection.Ascending}"/>
                                     <ComboBoxItem Content="Giảm dần ▼" Tag="{x:Static services:SortDirection.Descending}"/>
                                 </ComboBox>
