@@ -1,0 +1,544 @@
+<Window x:Class="BatchFileRenamer.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:BatchFileRenamer.Converters"
+        xmlns:services="clr-namespace:BatchFileRenamer.Services"
+        mc:Ignorable="d"
+        Title="Batch File Renamer - Đổi Tên Tệp Hàng Loạt An Toàn (.NET 8)" 
+        Height="780" Width="1280"
+        MinHeight="650" MinWidth="1050"
+        WindowStartupLocation="CenterScreen"
+        Background="#0B1120"
+        Foreground="#F8FAFC"
+        FontFamily="Segoe UI, -apple-system, BlinkMacSystemFont, Arial"
+        FontSize="13">
+
+    <Window.Resources>
+        <converters:StatusToBrushConverter x:Key="StatusToBrush"/>
+        <converters:StatusToBackgroundBrushConverter x:Key="StatusToBg"/>
+        <converters:StatusToTextConverter x:Key="StatusToText"/>
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:BooleanToVisibilityConverter x:Key="InverseBoolToVis" Invert="True"/>
+
+        <!-- Text Box Style -->
+        <Style x:Key="ModernTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="CaretBrush" Value="#38BDF8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#475569"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter TargetName="border" Property="Background" Value="#0F172A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style x:Key="ModernComboBox" TargetType="ComboBox">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="MinHeight" Value="32"/>
+        </Style>
+
+        <!-- DatePicker Style -->
+        <Style x:Key="ModernDatePicker" TargetType="DatePicker">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="Padding" Value="6,4"/>
+        </Style>
+
+        <!-- CheckBox Style -->
+        <Style x:Key="ModernCheckBox" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <!-- Modern Buttons -->
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#334155"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#64748B"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#0284C7"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1D4ED8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="BigActionButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Background" Value="#10B981"/>
+            <Setter Property="BorderBrush" Value="#059669"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="24,10"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#059669"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#334155"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="TokenChipButton" TargetType="Button">
+            <Setter Property="Background" Value="#0F172A"/>
+            <Setter Property="Foreground" Value="#38BDF8"/>
+            <Setter Property="BorderBrush" Value="#1E3A8A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,6,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1E3A8A"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#38BDF8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Card Container Style -->
+        <Style x:Key="CardPanel" TargetType="Border">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="14"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <!-- 0: Header -->
+            <RowDefinition Height="Auto"/>
+            <!-- 1: Toolbar / Directory Picker -->
+            <RowDefinition Height="Auto"/>
+            <!-- 2: Main Workspace (Left Settings, Right DataGrid) -->
+            <RowDefinition Height="*"/>
+            <!-- 3: Bottom Action & Status Bar -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 0: HEADER -->
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Background="#2563EB" CornerRadius="8" Width="36" Height="36" Margin="0,0,12,0">
+                    <TextBlock Text="🏷️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel>
+                    <TextBlock Text="Batch File Renamer" FontSize="20" FontWeight="Bold" Foreground="#F8FAFC"/>
+                    <TextBlock Text="Công cụ đổi tên file hàng loạt an toàn với xem trước tức thời &amp; 2-Phase Transaction" FontSize="12" Foreground="#94A3B8"/>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="📜 Lịch Sử &amp; Hoàn Tác (Undo)" Command="{Binding OpenHistoryCommand}" Style="{StaticResource PrimaryButton}" Padding="16,8"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- 1: DIRECTORY & FILTER TOOLBAR -->
+        <Border Grid.Row="1" Style="{StaticResource CardPanel}" Margin="0,0,0,14" Padding="12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="📁 Thư mục:" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#94A3B8" Margin="0,0,10,0"/>
+                
+                <TextBox Grid.Column="1" Text="{Binding CurrentDirectory, UpdateSourceTrigger=PropertyChanged}" 
+                         Style="{StaticResource ModernTextBox}" Margin="0,0,8,0"/>
+
+                <Button Grid.Column="2" Content="Chọn thư mục..." Command="{Binding BrowseDirectoryCommand}" 
+                        Style="{StaticResource ModernButton}" Margin="0,0,14,0"/>
+
+                <CheckBox Grid.Column="3" Content="Quét thư mục con (Recursive)" 
+                          IsChecked="{Binding IncludeSubdirectories}" 
+                          Style="{StaticResource ModernCheckBox}" Margin="0,0,16,0"/>
+
+                <Grid Grid.Column="4" Margin="0,0,8,0">
+                    <TextBox Text="{Binding ExtensionFilter, UpdateSourceTrigger=PropertyChanged}" 
+                             Style="{StaticResource ModernTextBox}" ToolTip="Lọc đuôi file, ví dụ: .jpg, .png, .mp4 (hoặc để trống để quét tất cả)"/>
+                    <TextBlock Text="Lọc đuôi: .jpg, .png..." Foreground="#64748B" VerticalAlignment="Center" Margin="10,0,0,0" IsHitTestVisible="False"
+                               Visibility="{Binding ExtensionFilter, Converter={StaticResource InverseBoolToVis}}"/>
+                </Grid>
+
+                <Button Grid.Column="5" Content="🔄 Làm mới" Command="{Binding RefreshScanCommand}" Style="{StaticResource ModernButton}"/>
+            </Grid>
+        </Border>
+
+        <!-- 2: MAIN WORKSPACE -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <!-- Left: Settings & Template Builder -->
+                <ColumnDefinition Width="380"/>
+                <ColumnDefinition Width="14"/>
+                <!-- Right: Preview Table / DataGrid -->
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT PANEL: TEMPLATE BUILDER & CONTROLS -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    
+                    <!-- Card: Basic Template Inputs -->
+                    <Border Style="{StaticResource CardPanel}">
+                        <StackPanel>
+                            <TextBlock Text="TRÌNH TẠO MẪU TÊN (TEMPLATE ENGINE)" FontWeight="Bold" Foreground="#38BDF8" FontSize="11" Margin="0,0,0,10"/>
+
+                            <!-- Base Name {name} -->
+                            <TextBlock Text="Tên chính {name}:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding BaseName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}" Margin="0,0,0,12"/>
+
+                            <!-- Date Controls -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="100"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Ngày bắt đầu:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                                    <DatePicker SelectedDate="{Binding StartDate}" Style="{StaticResource ModernDatePicker}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Bước ngày:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding DayStep, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Date Language Selection -->
+                            <TextBlock Text="Ngôn ngữ ngày tháng:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                            <ComboBox SelectedValue="{Binding SelectedLanguage}" SelectedValuePath="Tag" Style="{StaticResource ModernComboBox}" Margin="0,0,0,12">
+                                <ComboBoxItem Content="Tiếng Anh (en-US: Aug, Sep...)" Tag="en-US" IsSelected="True"/>
+                                <ComboBoxItem Content="Tiếng Việt (vi-VN: Thg8, Thg9...)" Tag="vi-VN"/>
+                            </ComboBox>
+
+                            <!-- Number Controls {n} -->
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Số bắt đầu {n}:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding StartNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Bước tăng số:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding NumberStep, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card: Advanced Template Expression -->
+                    <Border Style="{StaticResource CardPanel}">
+                        <StackPanel>
+                            <TextBlock Text="MẪU ĐỊNH DẠNG TÙY BIẾN" FontWeight="Bold" Foreground="#38BDF8" FontSize="11" Margin="0,0,0,8"/>
+                            
+                            <TextBox Text="{Binding Template, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource ModernTextBox}" 
+                                     FontFamily="Consolas, Cascadia Code, Courier New" 
+                                     FontSize="13" Margin="0,0,0,8"/>
+
+                            <!-- Quick Token Insertion Chips -->
+                            <TextBlock Text="Chèn nhanh token:" Foreground="#94A3B8" FontSize="11" Margin="0,0,0,4"/>
+                            <WrapPanel Margin="0,0,0,8">
+                                <Button Content="+ {name}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{name}" Style="{StaticResource TokenChipButton}"/>
+                                <Button Content="+ {date:MMM d, yyyy}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{date:MMM d, yyyy}" Style="{StaticResource TokenChipButton}"/>
+                                <Button Content="+ {date:dd-MM-yyyy}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{date:dd-MM-yyyy}" Style="{StaticResource TokenChipButton}"/>
+                                <Button Content="+ {n:000}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{n:000}" Style="{StaticResource TokenChipButton}"/>
+                                <Button Content="+ {n:00}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{n:00}" Style="{StaticResource TokenChipButton}"/>
+                                <Button Content="+ {orig}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{orig}" Style="{StaticResource TokenChipButton}"/>
+                            </WrapPanel>
+
+                            <!-- Live Sample Preview -->
+                            <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="6" Padding="10">
+                                <StackPanel>
+                                    <TextBlock Text="👁️ XEM TRƯỚC MẪU:" Foreground="#94A3B8" FontSize="10" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding SamplePreviewText}" Foreground="#34D399" FontWeight="SemiBold" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card: Sorting Controls -->
+                    <Border Style="{StaticResource CardPanel}">
+                        <StackPanel>
+                            <TextBlock Text="SẮP XẾP DANH SÁCH (TỰ NHIÊN)" FontWeight="Bold" Foreground="#38BDF8" FontSize="11" Margin="0,0,0,8"/>
+                            
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="110"/>
+                                </Grid.ColumnDefinitions>
+
+                                <ComboBox Grid.Column="0" SelectedValue="{Binding SelectedSortCriterion}" SelectedValuePath="Tag" Style="{StaticResource ModernComboBox}">
+                                    <ComboBoxItem Content="Tên file (Tự nhiên)" Tag="{x:Static services:SortCriterion.Name}"/>
+                                    <ComboBoxItem Content="Ngày tạo" Tag="{x:Static services:SortCriterion.CreatedDate}"/>
+                                    <ComboBoxItem Content="Ngày sửa" Tag="{x:Static services:SortCriterion.ModifiedDate}"/>
+                                    <ComboBoxItem Content="Kích thước" Tag="{x:Static services:SortCriterion.Size}"/>
+                                    <ComboBoxItem Content="Đường dẫn" Tag="{x:Static services:SortCriterion.FullPath}"/>
+                                </ComboBox>
+
+                                <ComboBox Grid.Column="2" SelectedValue="{Binding SelectedSortDirection}" SelectedValuePath="Tag" Style="{StaticResource ModernComboBox}">
+                                    <ComboBoxItem Content="Tăng dần ▲" Tag="{x:Static services:SortDirection.Ascending}"/>
+                                    <ComboBoxItem Content="Giảm dần ▼" Tag="{x:Static services:SortDirection.Descending}"/>
+                                </ComboBox>
+                            </Grid>
+
+                            <TextBlock Text="💡 Bạn có thể kéo thả trực tiếp dòng trong bảng bên phải hoặc dùng nút mũi tên để đổi thứ tự thủ công." Foreground="#94A3B8" FontSize="11" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- RIGHT PANEL: PREVIEW DATAGRID -->
+            <Border Grid.Column="2" Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <!-- Table toolbar -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Table -->
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Table Toolbar -->
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <CheckBox IsChecked="{Binding IsAllSelected}" Content="Chọn tất cả" Style="{StaticResource ModernCheckBox}" Margin="0,0,14,0"/>
+                            <TextBlock Text="{Binding Items.Count, StringFormat='Tổng: {0} tệp'}" Foreground="#94A3B8" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <Button Content="▲ Lên" Command="{Binding MoveItemUpCommand}" CommandParameter="{Binding SelectedItem, ElementName=PreviewDataGrid}" Style="{StaticResource ModernButton}" Padding="10,4" Margin="0,0,6,0"/>
+                            <Button Content="▼ Xuống" Command="{Binding MoveItemDownCommand}" CommandParameter="{Binding SelectedItem, ElementName=PreviewDataGrid}" Style="{StaticResource ModernButton}" Padding="10,4"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Preview DataGrid with Drag-Drop reordering -->
+                    <DataGrid x:Name="PreviewDataGrid" Grid.Row="1" ItemsSource="{Binding Items}" AutoGenerateColumns="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserSortColumns="False"
+                              Background="#0F172A" BorderBrush="#334155" BorderThickness="1"
+                              RowBackground="#0F172A" AlternatingRowBackground="#151E2E"
+                              GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#1E293B"
+                              HeadersVisibility="Column" SelectionMode="Single"
+                              PreviewMouseLeftButtonDown="DataGrid_PreviewMouseLeftButtonDown"
+                              MouseMove="DataGrid_MouseMove"
+                              Drop="DataGrid_Drop"
+                              AllowDrop="True"
+                              Foreground="#F8FAFC"
+                              RowHeight="32">
+                        
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#1E293B"/>
+                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="FontSize" Value="12"/>
+                                <Setter Property="Padding" Value="8,6"/>
+                                <Setter Property="BorderBrush" Value="#334155"/>
+                                <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+
+                        <DataGrid.Columns>
+                            <!-- Checkbox -->
+                            <DataGridTemplateColumn Width="40">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" 
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ModernCheckBox}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- # (STT) -->
+                            <DataGridTextColumn Header="#" Binding="{Binding OrderIndex}" Width="45" IsReadOnly="True"/>
+
+                            <!-- Original Name -->
+                            <DataGridTextColumn Header="Tên Cũ (Hiện tại)" Binding="{Binding OriginalFileNameWithExtension}" Width="1.3*" IsReadOnly="True"/>
+
+                            <!-- New Name Preview -->
+                            <DataGridTemplateColumn Header="Tên Mới Dự Kiến (Xem trước)" Width="1.8*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding NewFileNameWithExtension}" 
+                                                   FontWeight="SemiBold" 
+                                                   Foreground="#38BDF8" 
+                                                   VerticalAlignment="Center" 
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Extension -->
+                            <DataGridTextColumn Header="Đuôi" Binding="{Binding Extension}" Width="60" IsReadOnly="True"/>
+
+                            <!-- Status Badge -->
+                            <DataGridTemplateColumn Header="Trạng thái" Width="110">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{Binding Status, Converter={StaticResource StatusToBg}}" 
+                                                BorderBrush="{Binding Status, Converter={StaticResource StatusToBrush}}"
+                                                BorderThickness="1" CornerRadius="4" Padding="6,2" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding Status, Converter={StaticResource StatusToText}}" 
+                                                       Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}" 
+                                                       FontSize="11" FontWeight="Bold"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Warning / Error detail -->
+                            <DataGridTemplateColumn Header="Cảnh báo &amp; Thông điệp" Width="1.5*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding StatusMessage}" 
+                                                   Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}" 
+                                                   VerticalAlignment="Center" 
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Size -->
+                            <DataGridTextColumn Header="Dung lượng" Binding="{Binding FormattedSize}" Width="80" IsReadOnly="True"/>
+
+                            <!-- Modified Date -->
+                            <DataGridTextColumn Header="Ngày sửa" Binding="{Binding ModifiedDate, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" Width="120" IsReadOnly="True"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- 3: BOTTOM ACTION & STATUS BAR -->
+        <Border Grid.Row="3" Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,14,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Status summary & Progress bar -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <TextBlock Text="{Binding SummaryText}" FontSize="13" FontWeight="SemiBold" 
+                               Foreground="{Binding CanExecuteRename, Converter={StaticResource StatusToBrush}}"
+                               TextWrapping="Wrap"/>
+                    
+                    <!-- Progress Bar (Visible during execution) -->
+                    <Grid Visibility="{Binding IsExecuting, Converter={StaticResource BoolToVis}}" Margin="0,6,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <ProgressBar Grid.Row="0" Value="{Binding ProgressValue}" Maximum="100" Height="8" Foreground="#10B981" Background="#0F172A" BorderBrush="#334155"/>
+                        <TextBlock Grid.Row="1" Text="{Binding ProgressText}" Foreground="#94A3B8" FontSize="11" Margin="0,3,0,0"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Right: Big Action Button -->
+                <Button Grid.Column="1" Content="🚀 ĐỔI TÊN HÀNG LOẠT" 
+                        Command="{Binding ExecuteRenameCommand}" 
+                        Style="{StaticResource BigActionButton}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

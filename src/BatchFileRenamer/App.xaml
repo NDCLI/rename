@@ -1,0 +1,12 @@
+<Application x:Class="BatchFileRenamer.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:BatchFileRenamer">
+    <Application.Resources>
+        <!-- Global dark theme scrollbar styling -->
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="#0F172A"/>
+            <Setter Property="BorderBrush" Value="#1E293B"/>
+        </Style>
+    </Application.Resources>
+</Application>
