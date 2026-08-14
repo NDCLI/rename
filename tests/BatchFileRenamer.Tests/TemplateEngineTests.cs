@@ -155,6 +155,37 @@ namespace BatchFileRenamer.Tests
             Assert.Equal("Hồ Sơ [Nguyễn Văn Ánh - Dự Án Đổi Mới] - Số 01 - Ngày 14/08/2026", file0);
         }
 
+        [Fact]
+        public void GenerateFileName_FlexibleStructures_SupportsOrigPrefixSuffixAndParentFolder()
+        {
+            var item = new RenameItem
+            {
+                OriginalFileNameWithoutExtension = "IMG_0088",
+                OriginalDirectory = @"D:\Photos\Travel_2026",
+                Extension = ".jpg"
+            };
+
+            // Test 1: Prefix + Original
+            var optPrefix = new RenameTemplateOptions { Template = "{name}_{orig}", BaseName = "Vietnam" };
+            Assert.Equal("Vietnam_IMG_0088", _engine.GenerateFileName(optPrefix, 0, item));
+
+            // Test 2: Original + Suffix
+            var optSuffix = new RenameTemplateOptions { Template = "{orig}_{name}", BaseName = "Edited" };
+            Assert.Equal("IMG_0088_Edited", _engine.GenerateFileName(optSuffix, 0, item));
+
+            // Test 3: Parent Folder + Number
+            var optParent = new RenameTemplateOptions { Template = "{parent}_{n:000}", StartNumber = 1 };
+            Assert.Equal("Travel_2026_001", _engine.GenerateFileName(optParent, 0, item));
+
+            // Test 4: Pure Numbering
+            var optNumOnly = new RenameTemplateOptions { Template = "{n:0000}", StartNumber = 42 };
+            Assert.Equal("0042", _engine.GenerateFileName(optNumOnly, 0, item));
+
+            // Test 5: Case Modifiers
+            var optCase = new RenameTemplateOptions { Template = "{name:upper}_{orig:lower}", BaseName = "hdr" };
+            Assert.Equal("HDR_img_0088", _engine.GenerateFileName(optCase, 0, item));
+        }
+
         [Theory]
         [InlineData("{name}_{date:yyyyMMdd}", true)]
         [InlineData("{name}_{n:000}", true)]

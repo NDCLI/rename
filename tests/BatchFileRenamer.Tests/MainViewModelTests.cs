@@ -44,18 +44,21 @@ namespace BatchFileRenamer.Tests
         }
 
         [Fact]
-        public void ViewModel_InitialExampleConfig_MatchesSpec()
+        public void ViewModel_InitialConfigAndPresets_AreAvailable()
         {
-            // Spec example:
-            // Mẫu: {name} ({date:MMM d, yyyy})
-            // Tên chính: Re-ID Hoa
-            // Ngày bắt đầu: 14/08/2026
-            // Bước tăng: 1 ngày
-            Assert.Equal("{name} ({date:MMM d, yyyy})", _viewModel.Template);
+            Assert.NotEmpty(_viewModel.Presets);
+            Assert.Equal("{name}_{n:000}", _viewModel.Template);
             Assert.Equal("Re-ID Hoa", _viewModel.BaseName);
-            Assert.Equal(new DateTime(2026, 8, 14), _viewModel.StartDate);
-            Assert.Equal(1, _viewModel.DayStep);
-            Assert.Equal("en-US", _viewModel.SelectedLanguage);
+            Assert.Equal(1, _viewModel.StartNumber);
+            Assert.Equal(1, _viewModel.NumberStep);
+            Assert.False(_viewModel.HasDateToken);
+            Assert.True(_viewModel.HasNumberToken);
+
+            // Switching to Date preset
+            var datePreset = _viewModel.Presets.FirstOrDefault(p => p.TemplatePattern.Contains("{date"));
+            Assert.NotNull(datePreset);
+            _viewModel.SelectedPreset = datePreset;
+            Assert.True(_viewModel.HasDateToken);
         }
 
         [Fact]
@@ -69,8 +72,8 @@ namespace BatchFileRenamer.Tests
             Assert.Equal(2, _viewModel.Items.Count);
             Assert.True(_viewModel.CanExecuteRename);
 
-            Assert.Equal("Re-ID Hoa (Aug 14, 2026).txt", _viewModel.Items[0].NewFileNameWithExtension);
-            Assert.Equal("Re-ID Hoa (Aug 15, 2026).txt", _viewModel.Items[1].NewFileNameWithExtension);
+            Assert.Equal("Re-ID Hoa_001.txt", _viewModel.Items[0].NewFileNameWithExtension);
+            Assert.Equal("Re-ID Hoa_002.txt", _viewModel.Items[1].NewFileNameWithExtension);
         }
 
         [Fact]
@@ -79,6 +82,7 @@ namespace BatchFileRenamer.Tests
             File.WriteAllText(Path.Combine(_tempDir, "file_1.txt"), "a");
             File.WriteAllText(Path.Combine(_tempDir, "file_2.txt"), "b");
 
+            _viewModel.Template = "{name} ({date:MMM d, yyyy})";
             _viewModel.CurrentDirectory = _tempDir;
 
             // Before move: file_1 is Aug 14, file_2 is Aug 15
@@ -102,6 +106,7 @@ namespace BatchFileRenamer.Tests
             File.WriteAllText(Path.Combine(_tempDir, "file_2.txt"), "b");
             File.WriteAllText(Path.Combine(_tempDir, "file_3.txt"), "c");
 
+            _viewModel.Template = "{name} ({date:MMM d, yyyy})";
             _viewModel.CurrentDirectory = _tempDir;
 
             // Uncheck file_2 (index 1)

@@ -1,6 +1,6 @@
 using System;
 using System.Globalization;
-using System.Text;
+using System.IO;
 using System.Text.RegularExpressions;
 using BatchFileRenamer.Models;
 
@@ -35,7 +35,13 @@ namespace BatchFileRenamer.Services
                 switch (token)
                 {
                     case "name":
-                        return options.BaseName ?? string.Empty;
+                        string baseName = options.BaseName ?? string.Empty;
+                        if (!string.IsNullOrEmpty(format))
+                        {
+                            if (format.Equals("upper", StringComparison.OrdinalIgnoreCase)) return baseName.ToUpperInvariant();
+                            if (format.Equals("lower", StringComparison.OrdinalIgnoreCase)) return baseName.ToLowerInvariant();
+                        }
+                        return baseName;
 
                     case "date":
                         if (string.IsNullOrEmpty(format))
@@ -70,7 +76,23 @@ namespace BatchFileRenamer.Services
 
                     case "orig":
                     case "original":
-                        return item?.OriginalFileNameWithoutExtension ?? string.Empty;
+                        string origName = item?.OriginalFileNameWithoutExtension ?? string.Empty;
+                        if (!string.IsNullOrEmpty(format))
+                        {
+                            if (format.Equals("upper", StringComparison.OrdinalIgnoreCase)) return origName.ToUpperInvariant();
+                            if (format.Equals("lower", StringComparison.OrdinalIgnoreCase)) return origName.ToLowerInvariant();
+                        }
+                        return origName;
+
+                    case "parent":
+                    case "folder":
+                    case "dir":
+                        if (!string.IsNullOrEmpty(item?.OriginalDirectory))
+                        {
+                            string folderName = Path.GetFileName(item.OriginalDirectory);
+                            return string.IsNullOrEmpty(folderName) ? item.OriginalDirectory : folderName;
+                        }
+                        return string.Empty;
 
                     case "ext":
                         return item?.Extension.TrimStart('.') ?? string.Empty;

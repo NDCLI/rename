@@ -6,9 +6,9 @@
         xmlns:converters="clr-namespace:BatchFileRenamer.Converters"
         xmlns:services="clr-namespace:BatchFileRenamer.Services"
         mc:Ignorable="d"
-        Title="Batch File Renamer - Đổi Tên Tệp Hàng Loạt An Toàn (.NET 8)" 
-        Height="780" Width="1280"
-        MinHeight="650" MinWidth="1050"
+        Title="Batch File Renamer - Đổi Tên Tệp Hàng Loạt Linh Hoạt &amp; An Toàn (.NET 8)" 
+        Height="800" Width="1300"
+        MinHeight="680" MinWidth="1100"
         WindowStartupLocation="CenterScreen"
         Background="#0B1120"
         Foreground="#F8FAFC"
@@ -146,10 +146,10 @@
             <Setter Property="Foreground" Value="#38BDF8"/>
             <Setter Property="BorderBrush" Value="#1E3A8A"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Padding" Value="7,3"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0,0,6,6"/>
+            <Setter Property="Margin" Value="0,0,5,5"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -206,7 +206,7 @@
                 </Border>
                 <StackPanel>
                     <TextBlock Text="Batch File Renamer" FontSize="20" FontWeight="Bold" Foreground="#F8FAFC"/>
-                    <TextBlock Text="Công cụ đổi tên file hàng loạt an toàn với xem trước tức thời &amp; 2-Phase Transaction" FontSize="12" Foreground="#94A3B8"/>
+                    <TextBlock Text="Đổi tên tệp hàng loạt linh hoạt: Cấu trúc tùy biến, số thứ tự, tiền tố, hậu tố, ngày tháng &amp; 2-Phase Safe Renaming" FontSize="12" Foreground="#94A3B8"/>
                 </StackPanel>
             </StackPanel>
 
@@ -235,7 +235,7 @@
                 <Button Grid.Column="2" Content="Chọn thư mục..." Command="{Binding BrowseDirectoryCommand}" 
                         Style="{StaticResource ModernButton}" Margin="0,0,14,0"/>
 
-                <CheckBox Grid.Column="3" Content="Quét thư mục con (Recursive)" 
+                <CheckBox Grid.Column="3" Content="Quét cả thư mục con" 
                           IsChecked="{Binding IncludeSubdirectories}" 
                           Style="{StaticResource ModernCheckBox}" Margin="0,0,16,0"/>
 
@@ -254,7 +254,7 @@
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <!-- Left: Settings & Template Builder -->
-                <ColumnDefinition Width="380"/>
+                <ColumnDefinition Width="400"/>
                 <ColumnDefinition Width="14"/>
                 <!-- Right: Preview Table / DataGrid -->
                 <ColumnDefinition Width="*"/>
@@ -264,21 +264,94 @@
             <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel>
                     
-                    <!-- Card: Basic Template Inputs -->
+                    <!-- Card 1: Template Pattern & Preset Selector -->
                     <Border Style="{StaticResource CardPanel}">
                         <StackPanel>
-                            <TextBlock Text="TRÌNH TẠO MẪU TÊN (TEMPLATE ENGINE)" FontWeight="Bold" Foreground="#38BDF8" FontSize="11" Margin="0,0,0,10"/>
+                            <TextBlock Text="CẤU TRÚC ĐỔI TÊN (TEMPLATE PATTERN)" FontWeight="Bold" Foreground="#38BDF8" FontSize="11" Margin="0,0,0,8"/>
+
+                            <!-- Presets Dropdown -->
+                            <TextBlock Text="Mẫu cấu trúc gợi ý:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                            <ComboBox ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}" 
+                                      DisplayMemberPath="DisplayName" Style="{StaticResource ModernComboBox}" Margin="0,0,0,12"/>
+
+                            <!-- Template Editor Box -->
+                            <TextBlock Text="Mẫu định dạng tùy biến:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding Template, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource ModernTextBox}" 
+                                     FontFamily="Consolas, Cascadia Code, Courier New" 
+                                     FontSize="13" Margin="0,0,0,8"/>
+
+                            <!-- Quick Token Insertion Chips -->
+                            <TextBlock Text="Chèn nhanh token cấu trúc:" Foreground="#94A3B8" FontSize="11" Margin="0,0,0,4"/>
+                            <WrapPanel Margin="0,0,0,10">
+                                <Button Content="+ {name}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{name}" Style="{StaticResource TokenChipButton}" ToolTip="Tên chính"/>
+                                <Button Content="+ {n:000}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{n:000}" Style="{StaticResource TokenChipButton}" ToolTip="Số thứ tự 3 số: 001, 002..."/>
+                                <Button Content="+ {n:00}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{n:00}" Style="{StaticResource TokenChipButton}" ToolTip="Số thứ tự 2 số: 01, 02..."/>
+                                <Button Content="+ {n}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{n}" Style="{StaticResource TokenChipButton}" ToolTip="Số thứ tự tự nhiên: 1, 2, 3..."/>
+                                <Button Content="+ {orig}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{orig}" Style="{StaticResource TokenChipButton}" ToolTip="Tên file gốc"/>
+                                <Button Content="+ {parent}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{parent}" Style="{StaticResource TokenChipButton}" ToolTip="Tên thư mục cha"/>
+                                <Button Content="+ {date:MMM d, yyyy}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{date:MMM d, yyyy}" Style="{StaticResource TokenChipButton}" ToolTip="Ngày tháng tiếng Anh: Aug 14, 2026"/>
+                                <Button Content="+ {date:yyyyMMdd}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{date:yyyyMMdd}" Style="{StaticResource TokenChipButton}" ToolTip="Ngày chuẩn: 20260814"/>
+                            </WrapPanel>
 
                             <!-- Base Name {name} -->
                             <TextBlock Text="Tên chính {name}:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding BaseName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}" Margin="0,0,0,12"/>
+                            <TextBox Text="{Binding BaseName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}" Margin="0,0,0,10"/>
 
-                            <!-- Date Controls -->
-                            <Grid Margin="0,0,0,12">
+                            <!-- Live Sample Preview -->
+                            <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="6" Padding="10">
+                                <StackPanel>
+                                    <TextBlock Text="👁️ XEM TRƯỚC MẪU:" Foreground="#94A3B8" FontSize="10" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding SamplePreviewText}" Foreground="#34D399" FontWeight="SemiBold" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card 2: Numbering Settings {n} -->
+                    <Border Style="{StaticResource CardPanel}">
+                        <StackPanel>
+                            <TextBlock Text="THIẾT LẬP SỐ THỨ TỰ {n}" FontWeight="Bold" Foreground="#38BDF8" FontSize="11" Margin="0,0,0,8"/>
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="10"/>
-                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Số bắt đầu:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding StartNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Bước tăng số:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding NumberStep, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card 3: Date Settings {date} (Active when template uses date) -->
+                    <Border Style="{StaticResource CardPanel}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="THIẾT LẬP NGÀY THÁNG {date}" FontWeight="Bold" Foreground="#38BDF8" FontSize="11"/>
+                                <Border Grid.Column="1" Background="#064E3B" CornerRadius="4" Padding="6,1" Visibility="{Binding HasDateToken, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="Đang dùng trong mẫu" Foreground="#34D399" FontSize="10" FontWeight="Bold"/>
+                                </Border>
+                            </Grid>
+
+                            <!-- Date Controls -->
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="90"/>
                                 </Grid.ColumnDefinitions>
                                 
                                 <StackPanel Grid.Column="0">
@@ -294,64 +367,14 @@
 
                             <!-- Date Language Selection -->
                             <TextBlock Text="Ngôn ngữ ngày tháng:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                            <ComboBox SelectedValue="{Binding SelectedLanguage}" SelectedValuePath="Tag" Style="{StaticResource ModernComboBox}" Margin="0,0,0,12">
+                            <ComboBox SelectedValue="{Binding SelectedLanguage}" SelectedValuePath="Tag" Style="{StaticResource ModernComboBox}">
                                 <ComboBoxItem Content="Tiếng Anh (en-US: Aug, Sep...)" Tag="en-US" IsSelected="True"/>
                                 <ComboBoxItem Content="Tiếng Việt (vi-VN: Thg8, Thg9...)" Tag="vi-VN"/>
                             </ComboBox>
-
-                            <!-- Number Controls {n} -->
-                            <Grid Margin="0,0,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="10"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Số bắt đầu {n}:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding StartNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Bước tăng số:" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding NumberStep, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
-                                </StackPanel>
-                            </Grid>
                         </StackPanel>
                     </Border>
 
-                    <!-- Card: Advanced Template Expression -->
-                    <Border Style="{StaticResource CardPanel}">
-                        <StackPanel>
-                            <TextBlock Text="MẪU ĐỊNH DẠNG TÙY BIẾN" FontWeight="Bold" Foreground="#38BDF8" FontSize="11" Margin="0,0,0,8"/>
-                            
-                            <TextBox Text="{Binding Template, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource ModernTextBox}" 
-                                     FontFamily="Consolas, Cascadia Code, Courier New" 
-                                     FontSize="13" Margin="0,0,0,8"/>
-
-                            <!-- Quick Token Insertion Chips -->
-                            <TextBlock Text="Chèn nhanh token:" Foreground="#94A3B8" FontSize="11" Margin="0,0,0,4"/>
-                            <WrapPanel Margin="0,0,0,8">
-                                <Button Content="+ {name}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{name}" Style="{StaticResource TokenChipButton}"/>
-                                <Button Content="+ {date:MMM d, yyyy}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{date:MMM d, yyyy}" Style="{StaticResource TokenChipButton}"/>
-                                <Button Content="+ {date:dd-MM-yyyy}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{date:dd-MM-yyyy}" Style="{StaticResource TokenChipButton}"/>
-                                <Button Content="+ {n:000}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{n:000}" Style="{StaticResource TokenChipButton}"/>
-                                <Button Content="+ {n:00}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{n:00}" Style="{StaticResource TokenChipButton}"/>
-                                <Button Content="+ {orig}" Command="{Binding InsertTokenCommand}" CommandParameter="{}{orig}" Style="{StaticResource TokenChipButton}"/>
-                            </WrapPanel>
-
-                            <!-- Live Sample Preview -->
-                            <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="6" Padding="10">
-                                <StackPanel>
-                                    <TextBlock Text="👁️ XEM TRƯỚC MẪU:" Foreground="#94A3B8" FontSize="10" FontWeight="Bold"/>
-                                    <TextBlock Text="{Binding SamplePreviewText}" Foreground="#34D399" FontWeight="SemiBold" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Card: Sorting Controls -->
+                    <!-- Card 4: Sorting Controls -->
                     <Border Style="{StaticResource CardPanel}">
                         <StackPanel>
                             <TextBlock Text="SẮP XẾP DANH SÁCH (TỰ NHIÊN)" FontWeight="Bold" Foreground="#38BDF8" FontSize="11" Margin="0,0,0,8"/>

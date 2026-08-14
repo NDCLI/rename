@@ -12,6 +12,15 @@ using BatchFileRenamer.Services;
 
 namespace BatchFileRenamer.ViewModels
 {
+    public class TemplatePreset
+    {
+        public string DisplayName { get; set; } = string.Empty;
+        public string TemplatePattern { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+
+        public override string ToString() => DisplayName;
+    }
+
     public class MainViewModel : ViewModelBase
     {
         private readonly ITemplateEngine _templateEngine;
@@ -26,7 +35,7 @@ namespace BatchFileRenamer.ViewModels
         private SortCriterion _selectedSortCriterion = SortCriterion.Name;
         private SortDirection _selectedSortDirection = SortDirection.Ascending;
 
-        private string _template = "{name} ({date:MMM d, yyyy})";
+        private string _template = "{name}_{n:000}";
         private string _baseName = "Re-ID Hoa";
         private DateTime _startDate = new DateTime(2026, 8, 14);
         private int _dayStep = 1;
@@ -35,6 +44,9 @@ namespace BatchFileRenamer.ViewModels
         private string _selectedLanguage = "en-US";
 
         private ObservableCollection<RenameItem> _items = new();
+        private ObservableCollection<TemplatePreset> _presets = new();
+        private TemplatePreset? _selectedPreset;
+
         private bool? _isAllSelected = true;
         private bool _isScanning = false;
         private bool _isExecuting = false;
@@ -111,10 +123,15 @@ namespace BatchFileRenamer.ViewModels
             {
                 if (SetProperty(ref _template, value))
                 {
+                    OnPropertyChanged(nameof(HasDateToken));
+                    OnPropertyChanged(nameof(HasNumberToken));
                     UpdatePlan();
                 }
             }
         }
+
+        public bool HasDateToken => !string.IsNullOrEmpty(Template) && Template.Contains("{date", StringComparison.OrdinalIgnoreCase);
+        public bool HasNumberToken => !string.IsNullOrEmpty(Template) && (Template.Contains("{n", StringComparison.OrdinalIgnoreCase) || Template.Contains("{seq", StringComparison.OrdinalIgnoreCase) || Template.Contains("{num", StringComparison.OrdinalIgnoreCase));
 
         public string BaseName
         {
@@ -196,6 +213,24 @@ namespace BatchFileRenamer.ViewModels
             set => SetProperty(ref _items, value);
         }
 
+        public ObservableCollection<TemplatePreset> Presets
+        {
+            get => _presets;
+            set => SetProperty(ref _presets, value);
+        }
+
+        public TemplatePreset? SelectedPreset
+        {
+            get => _selectedPreset;
+            set
+            {
+                if (SetProperty(ref _selectedPreset, value) && value != null)
+                {
+                    Template = value.TemplatePattern;
+                }
+            }
+        }
+
         public bool? IsAllSelected
         {
             get => _isAllSelected;
@@ -268,6 +303,7 @@ namespace BatchFileRenamer.ViewModels
         public ICommand UnselectAllCommand { get; }
         public ICommand InvertSelectionCommand { get; }
         public ICommand InsertTokenCommand { get; }
+        public ICommand ApplyPresetCommand { get; }
         public ICommand MoveItemUpCommand { get; }
         public ICommand MoveItemDownCommand { get; }
         public ICommand ExecuteRenameCommand { get; }
@@ -289,18 +325,96 @@ namespace BatchFileRenamer.ViewModels
             _historyStore = historyStore;
             _fileScanner = fileScanner;
 
+            InitializePresets();
+
             BrowseDirectoryCommand = new RelayCommand(BrowseDirectory);
             RefreshScanCommand = new RelayCommand(ScanDirectory);
             SelectAllCommand = new RelayCommand(() => SetAllItemsSelected(true));
             UnselectAllCommand = new RelayCommand(() => SetAllItemsSelected(false));
             InvertSelectionCommand = new RelayCommand(InvertSelection);
             InsertTokenCommand = new RelayCommand(InsertToken);
+            ApplyPresetCommand = new RelayCommand(ApplyPreset);
             MoveItemUpCommand = new RelayCommand(MoveItemUp);
             MoveItemDownCommand = new RelayCommand(MoveItemDown);
             ExecuteRenameCommand = new AsyncRelayCommand(ExecuteRenameAsync, () => CanExecuteRename && !IsExecuting);
             OpenHistoryCommand = new RelayCommand(() => RequestOpenHistory?.Invoke());
 
             UpdateSamplePreview();
+        }
+
+        private void InitializePresets()
+        {
+            _presets = new ObservableCollection<TemplatePreset>
+            {
+                new TemplatePreset 
+                { 
+                    DisplayName = "📌 Tên chính + Số thứ tự 3 số ({name}_{n:000})", 
+                    TemplatePattern = "{name}_{n:000}",
+                    Description = "Ví dụ: Re-ID Hoa_001, Re-ID Hoa_002..."
+                },
+                new TemplatePreset 
+                { 
+                    DisplayName = "📌 Tên chính + Số trong ngoặc ({name} ({n}))", 
+                    TemplatePattern = "{name} ({n})",
+                    Description = "Ví dụ: Re-ID Hoa (1), Re-ID Hoa (2)..."
+                },
+                new TemplatePreset 
+                { 
+                    DisplayName = "📌 Tên chính + Ngày tháng ({name} ({date:MMM d, yyyy}))", 
+                    TemplatePattern = "{name} ({date:MMM d, yyyy})",
+                    Description = "Ví dụ: Re-ID Hoa (Aug 14, 2026)..."
+                },
+                new TemplatePreset 
+                { 
+                    DisplayName = "📌 Tên chính + Ngày chuẩn + Số ({name}_{date:yyyyMMdd}_{n:000})", 
+                    TemplatePattern = "{name}_{date:yyyyMMdd}_{n:000}",
+                    Description = "Ví dụ: Re-ID Hoa_20260814_001..."
+                },
+                new TemplatePreset 
+                { 
+                    DisplayName = "📌 Thêm tiền tố vào tên gốc ({name}_{orig})", 
+                    TemplatePattern = "{name}_{orig}",
+                    Description = "Ví dụ: Re-ID Hoa_ImageOriginalName"
+                },
+                new TemplatePreset 
+                { 
+                    DisplayName = "📌 Thêm hậu tố vào tên gốc ({orig}_{name})", 
+                    TemplatePattern = "{orig}_{name}",
+                    Description = "Ví dụ: ImageOriginalName_Re-ID Hoa"
+                },
+                new TemplatePreset 
+                { 
+                    DisplayName = "📌 Tên gốc + Số thứ tự ({orig}_{n:00})", 
+                    TemplatePattern = "{orig}_{n:00}",
+                    Description = "Ví dụ: DocName_01, DocName_02..."
+                },
+                new TemplatePreset 
+                { 
+                    DisplayName = "📌 Tên thư mục cha + Số ({parent}_{n:000})", 
+                    TemplatePattern = "{parent}_{n:000}",
+                    Description = "Ví dụ: FolderName_001, FolderName_002..."
+                },
+                new TemplatePreset 
+                { 
+                    DisplayName = "📌 Chỉ số thứ tự ({n:000})", 
+                    TemplatePattern = "{n:000}",
+                    Description = "Ví dụ: 001, 002, 003..."
+                }
+            };
+
+            _selectedPreset = _presets.FirstOrDefault();
+        }
+
+        private void ApplyPreset(object? param)
+        {
+            if (param is TemplatePreset preset)
+            {
+                SelectedPreset = preset;
+            }
+            else if (param is string pattern && !string.IsNullOrEmpty(pattern))
+            {
+                Template = pattern;
+            }
         }
 
         public void BrowseDirectory()
