@@ -58,6 +58,10 @@ namespace BatchFileRenamer.Views
             historyWindow.ShowDialog();
         }
 
+        private void btnMinimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+        private void btnMaximize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        private void btnClose_Click(object sender, RoutedEventArgs e) => Close();
+
         #region Drag and Drop Reordering in DataGrid
 
         private void DataGrid_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
